@@ -33,3 +33,9 @@ year = st.slider("연도를 고르세요", 1900, 2100, 2045)
 st.metric(f"{year}년 예상 연평균기온", f"{a * (year - 1908) + b:.1f}℃")
 if year < yearly["연도"].min() or year > yearly["연도"].max():
     st.info("학습 범위 밖의 외삽값입니다. 실제 미래 기온을 보장하지 않습니다.")
+# 기울기를 100년 단위로, 그리고 최근 20년과 비교
+recent = yearly[yearly["연도"] >= yearly["연도"].max() - 19]
+a2, _ = np.polyfit(recent["연도"], recent["연평균기온"], 1)
+c1, c2 = st.columns(2)
+c1.metric("전체 기간 기울기", f"{a * 100:+.2f}℃ / 100년")
+c2.metric("최근 20년 기울기", f"{a2 * 100:+.2f}℃ / 100년")
