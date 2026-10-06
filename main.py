@@ -39,3 +39,20 @@ a2, _ = np.polyfit(recent["연도"], recent["연평균기온"], 1)
 c1, c2 = st.columns(2)
 c1.metric("전체 기간 기울기", f"{a * 100:+.2f}℃ / 100년")
 c2.metric("최근 20년 기울기", f"{a2 * 100:+.2f}℃ / 100년")
+# 도전 — 직선 대신 곡선을 쓰면 (main.py 끝에 이어 붙일 부분)
+import numpy as np
+
+st.subheader("도전 — 직선 대신 곡선을 쓰면")
+연평균 = all_years[all_years["count"] >= 300].rename(columns={"mean": "기온"})   # 앞에서 만든 연평균 표
+학습 = 연평균[연평균["연도"] < 2005]                             # 2005년 이전은 훈련용
+평가 = 연평균[연평균["연도"] >= 2005]                            # 그 뒤는 한 번도 안 본 테스트용
+x = lambda y: (y - 1950) / 100                                   # 연도를 작은 수로 바꿔야 고차 곡선이 안정된다
+
+rows = []
+for 차수 in [1, 3, 9]:
+    계수 = np.polyfit(x(학습["연도"]), 학습["기온"], 차수)
+    평가오차 = np.abs(np.polyval(계수, x(평가["연도"])) - 평가["기온"]).mean()
+    rows.append({"곡선": f"{차수}차", "테스트 오차(℃)": round(평가오차, 2),
+                 "2050년 예측(℃)": round(np.polyval(계수, x(2050)), 1)})
+st.dataframe(pd.DataFrame(rows), hide_index=True)
+st.caption(f"훈련용 {len(학습)}개 연도 · 테스트용 {len(평가)}개 연도 · 테스트 오차는 평균절대오차(MAE)입니다.")
